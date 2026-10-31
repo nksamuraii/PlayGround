@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#070b0d" />
+    <meta name="description" content="BULWARK — a CrossFire-inspired browser FPS. Hold the reactor of Transport 09 against five boarding waves." />
+    <title>BULWARK // Transport 09</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23080d0f'/%3E%3Cpath d='M32 8 56 32 32 56 8 32Z' fill='%23ff6a2a'/%3E%3Cpath d='M32 20 44 32 32 44 20 32Z' fill='%23080d0f'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene" aria-label="Game view"></canvas>
+
+      <div class="screen-fx" id="vignette"></div>
+      <div class="screen-fx" id="grain"></div>
+      <div class="screen-fx" id="danger-flash"></div>
+      <div class="scanlines"></div>
+
+      <!-- ============ HUD ============ -->
+      <section id="hud" class="hidden" aria-live="polite">
+        <header class="hud-top">
+          <div class="hud-block wave-block">
+            <div class="eyebrow">BOARDING WAVE</div>
+            <div class="wave-row">
+              <span id="wave-num" class="huge">01</span>
+              <span class="wave-of">/ 05</span>
+            </div>
+            <div class="score-row"><span class="eyebrow">SCORE</span><span id="score">000000</span></div>
+          </div>
+
+          <div class="objective">
+            <div class="eyebrow">OBJECTIVE</div>
+            <div id="objective-text">DEFEND THE REACTOR CORE</div>
+            <div class="core-bar">
+              <div id="core-fill"></div>
+              <i class="tick" style="left: 20%"></i>
+              <i class="tick" style="left: 40%"></i>
+              <i class="tick" style="left: 60%"></i>
+              <i class="tick" style="left: 80%"></i>
+            </div>
+            <div class="core-meta"><span>CORE INTEGRITY</span><span id="core-num">120</span></div>
+          </div>
+
+          <div class="hud-block map-block">
+            <div class="map-head"><span class="eyebrow">CARGO BAY</span><span id="threat" class="threat">CLEAR</span></div>
+            <canvas id="minimap" width="220" height="220"></canvas>
+            <div id="killfeed"></div>
+          </div>
+        </header>
+
+        <div class="hud-bottom">
+          <div class="vitals">
+            <div class="eyebrow">OPERATOR</div>
+            <div class="bar health-bar">
+              <div id="health-fill"></div>
+            </div>
+            <div class="vitals-row">
+              <span id="health-num">100</span>
+              <span class="dim" id="health-state">STABLE</span>
+            </div>
+          </div>
+
+          <div class="ammo">
+            <div class="weapon-line"><span id="weapon-name">VK-7 CARBINE</span><span class="dim">AUTO</span></div>
+            <div class="ammo-line">
+              <span id="ammo-mag">30</span>
+              <span class="slash">/</span>
+              <span id="ammo-res">&#8734;</span>
+            </div>
+            <div class="ammo-pips" id="ammo-pips"></div>
+            <div id="reload-hint" class="hidden">RELOAD&nbsp;<kbd>R</kbd></div>
+          </div>
+        </div>
+
+        <div id="crosshair" class="crosshair">
+          <i class="ch ch-t"></i><i class="ch ch-b"></i><i class="ch ch-l"></i><i class="ch ch-r"></i>
+          <span class="ch-dot"></span>
+        </div>
+        <div id="hitmarker">
+          <i></i><i></i><i></i><i></i>
+        </div>
+        <div id="damage-indicator"></div>
+
+        <div id="banner" class="banner">
+          <div class="banner-rule"></div>
+          <div id="banner-title">WAVE 01</div>
+          <div id="banner-sub">BOARDING PARTY INBOUND</div>
+          <div class="banner-rule"></div>
+        </div>
+
+        <div id="toast" class="toast"></div>
+        <div id="pointer-hint" class="pointer-hint hidden">CLICK TO CAPTURE MOUSE &nbsp;·&nbsp; <kbd>ESC</kbd> TO PAUSE</div>
+      </section>
+
+      <!-- ============ TOUCH ============ -->
+      <section id="touch" class="hidden" aria-hidden="true">
+        <div id="stick-zone" class="stick-zone">
+          <div class="stick-base"><div id="stick-knob" class="stick-knob"></div></div>
+        </div>
+        <button id="btn-fire" class="touch-btn fire" aria-label="Fire">FIRE</button>
+        <button id="btn-aim" class="touch-btn small" aria-label="Aim">AIM</button>
+        <button id="btn-reload" class="touch-btn small" aria-label="Reload">RELOAD</button>
+        <button id="btn-jump" class="touch-btn small" aria-label="Jump">JUMP</button>
+      </section>
+
+      <!-- ============ MENU ============ -->
+      <section id="menu" class="screen menu">
+        <div class="menu-panel">
+          <div class="brand">
+            <span class="brand-mark"></span>
+            <span class="brand-text">ORBITAL FREIGHT AUTHORITY</span>
+            <span class="brand-tag">CF-09</span>
+          </div>
+
+          <h1 class="logo" data-text="BULWARK">BULWARK</h1>
+          <div class="subhead">
+            <span class="subhead-rule"></span>
+            <span>TRANSPORT 09 &nbsp;//&nbsp; CARGO BAY</span>
+          </div>
+
+          <p class="brief">
+            Boarders are cutting through the hull. You are the last operator between them
+            and the <b>reactor core</b>. Hold the bay for five waves.
+          </p>
+
+          <button id="start-btn" class="cta" type="button" aria-label="START">
+            <span class="cta-index">[ DEPLOY ]</span>
+            <span class="cta-label">START</span>
+          </button>
+
+          <div class="menu-grid">
+            <div class="menu-col">
+              <div class="eyebrow">CONTROLS</div>
+              <ul class="keys keys-desktop">
+                <li><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span> MOVE</li>
+                <li><span><kbd>MOUSE</kbd></span> LOOK / FIRE</li>
+                <li><span><kbd>SHIFT</kbd><kbd>SPACE</kbd></span> SPRINT / JUMP</li>
+                <li><span><kbd>R</kbd><kbd>ESC</kbd></span> RELOAD / PAUSE</li>
+              </ul>
+              <ul class="keys keys-touch">
+                <li><span><kbd>LEFT PAD</kbd></span> MOVE</li>
+                <li><span><kbd>DRAG</kbd></span> LOOK</li>
+                <li><span><kbd>FIRE</kbd><kbd>AIM</kbd></span> SHOOT / ADS</li>
+                <li><span><kbd>JUMP</kbd><kbd>RELOAD</kbd></span> ACTION BUTTONS</li>
+              </ul>
+            </div>
+            <div class="menu-col">
+              <div class="eyebrow">THREAT PROFILE</div>
+              <ul class="threat-list">
+                <li><i class="dot drone"></i><b>SPECTER</b> — fast kamikaze drone</li>
+                <li><i class="dot raider"></i><b>BOARDER</b> — armed, keeps distance</li>
+                <li><i class="dot brute"></i><b>BREACHER</b> — heavy, hits the core</li>
+              </ul>
+            </div>
+          </div>
+
+          <footer class="menu-foot">
+            <span>BEST <b id="best-score">000000</b></span>
+            <span class="dim">HEADPHONES RECOMMENDED</span>
+          </footer>
+        </div>
+        <div class="menu-corner menu-corner--tr">BAY 04 · PRESSURIZED</div>
+        <div class="menu-corner menu-corner--br">HOSTILES: <b id="menu-hostiles">UNKNOWN</b></div>
+      </section>
+
+      <!-- ============ PAUSE ============ -->
+      <section id="pause" class="screen modal hidden">
+        <div class="modal-card">
+          <div class="eyebrow">SESSION HALTED</div>
+          <h2>PAUSED</h2>
+          <p>Reactor is holding. Boarders are not.</p>
+          <button id="resume-btn" class="cta small" type="button"><span class="cta-label">RESUME</span></button>
+          <div class="modal-meta">
+            <button id="restart-btn" class="link-btn" type="button">RESTART RUN</button>
+            <button id="mute-btn" class="link-btn" type="button">SOUND: ON</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ END ============ -->
+      <section id="end" class="screen modal hidden">
+        <div class="modal-card end-card">
+          <div class="eyebrow" id="end-eyebrow">TRANSMISSION ENDED</div>
+          <h2 id="end-title">CORE LOST</h2>
+          <p id="end-copy">Transport 09 is dark. The bay belongs to them now.</p>
+          <div class="stats" id="end-stats"></div>
+          <button id="redeploy-btn" class="cta" type="button"><span class="cta-label">REDEPLOY</span></button>
+          <button id="menu-btn" class="link-btn" type="button">RETURN TO BRIEFING</button>
+        </div>
+      </section>
+
+      <div id="rotate-hint">ROTATE DEVICE FOR FULL FIELD OF VIEW</div>
+      <div id="boot-error" class="hidden"></div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
